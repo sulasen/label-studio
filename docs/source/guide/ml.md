@@ -19,6 +19,7 @@ That gives you the opportunities to use:
 - [Create the simplest ML backend](/tutorials/dummy_model.html)
 - [Text classification with Scikit-Learn](/tutorials/sklearn-text-classifier.html)
 - [Transfer learning for images with PyTorch](/tutorials/pytorch-image-transfer-learning.html)
+- [Image Object Detector](/tutorials/object-detector.html)
 
 #### Create your own ML backend
 
@@ -57,15 +58,23 @@ Here is a quick example tutorial on how to run the ML backend with a simple text
     ```
     You can confirm that the model has connected properly from the `/model` subpage in the Label Studio UI.
     
-5. Getting predictions
-    You should see model predictions in the labeling interface. For example in an image classification task: the model will 
-    pre-select an image class for you to verify. 
+### Getting predictions
 
-6. Model training
+   You should see model predictions in the labeling interface and Tasks page (/tasks). For example in an image classification task: the model will pre-select an image class for you to verify.
+   
+   Also you can obtain a prediction via Label Studio Backend working on `http://localhost:8080`:
+    
+   ```
+    curl -X POST -d '{"text":"some text"}' -H "Content-Type: application/json" http://localhost:8080/api/models/predictions
+   ```
+
+   where `{"text":"some text"}` is your task data. 
+   
+### Model training
 
    Model training can be triggered manually by pushing the Start Training button on the `/model` page, or by using an API call:
    ```
-   curl -X POST http://localhost:8080/api/train
+   curl -X POST http://localhost:8080/api/models/train
    ```
    In development mode, training logs will have an output into the console. In production mode, runtime logs are available in    
    `my_backend/logs/uwsgi.log` and RQ training logs in `my_backend/logs/rq.log`
@@ -110,3 +119,28 @@ Depending on score types you can select a sampling strategy
  
 Read more about active learning sampling [on the task page](https://labelstud.io/guide/tasks.html#Sampling). 
  
+
+## Troubleshooting
+
+When you encounter any error, there are several hints to get more insights. 
+Most of the problems could be easily investigated from the server console log. 
+Note that since you run ML backend as a separate server, you have to check its logs (not Label Studio server's ones!)
+
+> Note: When you start ML backend using docker-compose, the logs are located in:
+> - main process / inference logs: logs/uwsgi.log
+> - training logs: logs/rq.log
+
+**I've launched ML backend, but after adding it in Label Studio's UI it results to _Disconnected_ state.**
+
+Perhaps your ML backend server didn't start properly. Try to do healthcheck via `curl -X GET http://localhost:9090/health`. 
+If it doesn't respond or you see any errors, check server logs. When you're using docker-compose for starting ML backend, one common cause of errors is missed `requirements.txt` to set up environment inside docker.
+
+**ML backend seems to be connected, but after I press "Start Training", I see "Error. Click here for details." message.**
+
+Check for the traceback after you click on error message. Some common errors are insufficient amount of annotations made or memory issues.
+If you can't resolve them by yourself, <a href="https://join.slack.com/t/label-studio/shared_invite/zt-cr8b7ygm-6L45z7biEBw4HXa5A2b5pw">write us on Slack</a>.
+
+**My predictions are wrong / I can't see the model prediction result on labeling page**
+
+ML backend predictions format follows exactly the same structure as [predictions in imported preannotations](/guide/tasks.html#How-to-import-preannotations)
+
