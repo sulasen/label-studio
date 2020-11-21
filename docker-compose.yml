@@ -1,13 +1,27 @@
 version: "3"
 
-services: 
+services:
+
+  label-studio-ml:
+    container_name: label-studio-ml
+    build: .
+    working_dir: /label-studio
+    volumes:
+      - ./my_project:/label-studio/my_project
+    command: "label-studio-ml start my_ml_backend ${INIT_COMMAND} --host 0.0.0.0"
+    ports:
+      - "9090:9090"
+    restart: always
+
   label-studio:
     container_name: label-studio
     build: .
     working_dir: /label-studio
     volumes:
       - ./my_project:/label-studio/my_project
-    command: "label-studio start my_project ${INIT_COMMAND} --host 0.0.0.0"
+    command: "label-studio start my_project ${INIT_COMMAND} --host 0.0.0.0 --ml-backends http://10.165.12.99:9090"
     ports:
       - "8080:8080"
     restart: always
+
+
